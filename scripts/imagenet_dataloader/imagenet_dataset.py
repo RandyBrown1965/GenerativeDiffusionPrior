@@ -85,7 +85,9 @@ class ImageFolderDataset(data.Dataset):
 
         if self.return_numpy:
             x = x.detach().numpy()
-
+        
+        return x, None
+        """
         if isinstance(self.labels, int):
             y = self.labels
         elif isinstance(self.labels, dict):
@@ -97,6 +99,7 @@ class ImageFolderDataset(data.Dataset):
             # img names is like 27987_label_762.png
             y = int(img_name.split('_')[-1].split('.')[0])
         return x, y
+        """
 
 
 if __name__ == '__main__':

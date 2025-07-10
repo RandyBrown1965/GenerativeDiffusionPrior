@@ -14,7 +14,7 @@ import torch.nn.functional as F
 
 # from guided_diffusion import dist_util, logger
 from guided_diffusion import logger
-from guided_diffusion.script_util_x0 import (
+from guided_diffusion.script_util import (
     NUM_CLASSES,
     model_and_diffusion_defaults,
     create_model_and_diffusion,
@@ -57,7 +57,8 @@ if deg[:3] == 'inp':
         mask = torch.from_numpy(loaded).to(device).reshape(-1)
         missing_r = torch.nonzero(mask == 0).long().reshape(-1) * 3
     else:
-        loaded = np.loadtxt("/mnt/lustre/feiben/DDPM_Beat_GAN/scripts/imagenet_dataloader/inp_masks/mask.np")
+        #loaded = np.loadtxt("/mnt/lustre/feiben/DDPM_Beat_GAN/scripts/imagenet_dataloader/inp_masks/mask.np")
+        loaded = np.loadtxt("../scripts/inp_masks/mask.np")
         mask = torch.from_numpy(loaded).to(device)
         missing_r = mask[:image_size**2 // 4].to(device).long() * 3  
     missing_g = missing_r + 1
@@ -117,9 +118,9 @@ def main():
                 mse = (x_in_lr - x_lr) ** 2
                 mse = mse.mean(dim=(1,2,3))
                 mse = mse.sum()
-                ssim_value = pytorch_ssim.ssim(x_in_lr, x_lr).item()
-                ssim_loss = pytorch_ssim.SSIM()
-                ssim_out = -ssim_loss(x_in_lr, x_lr)
+                #ssim_value = pytorch_ssim.ssim(x_in_lr, x_lr).item()
+                #ssim_loss = pytorch_ssim.SSIM()
+                #ssim_out = -ssim_loss(x_in_lr, x_lr)
 
                 loss = - mse * args.img_guidance_scale # move xt toward the gradient direction 
                 print('step t %d img guidance has been used, mse is %.8f * %d = %.2f' % (t[0], mse, args.img_guidance_scale, mse*args.img_guidance_scale))
@@ -235,6 +236,8 @@ def main():
     # dist.barrier()
     logger.log("sampling complete")
 
+    del model
+    del image
 
 def create_argparser():
     defaults = dict(
@@ -242,15 +245,19 @@ def create_argparser():
         num_samples=100,
         batch_size=1,
         use_ddim=False,
-        model_path="/mnt/lustre/feiben/DDPM_Beat_GAN/scripts/models/256x256_diffusion_uncond.pt"
+        #model_path="/mnt/lustre/feiben/DDPM_Beat_GAN/scripts/models/256x256_diffusion_uncond.pt"
+        model_path="../scripts/models/256x256_diffusion_uncond.pt"
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
     add_dict_to_argparser(parser, defaults)
 
 
-    save_dir  = os.path.join('/mnt/petrelfs/feiben/GDP/generate_images', ('generated_image_x0_GDP_' + deg))
-    base_samples  = os.path.join('/mnt/lustre/feiben/DDPM_Beat_GAN/scripts/imagenet_dataloader', (deg + ('_resolution_256.npz')))
+    #save_dir  = os.path.join('/mnt/petrelfs/feiben/GDP/generate_images', ('generated_image_x0_GDP_' + deg))
+    save_dir  = os.path.join('../generate_images', ('generated_image_GDP_' + deg))
+    #base_samples  = os.path.join('/mnt/lustre/feiben/DDPM_Beat_GAN/scripts/imagenet_dataloader', (deg + ('_resolution_256.npz')))
+    #base_samples  = os.path.join('../scripts/imagenet_dataloader', (deg + ('_resolution_256.npz')))
+    base_samples  = os.path.join('../scripts/imagenet_dataloader', 'VIRTUAL_imagenet256_labeled.npz')
     # add zhaoyang own's arguments
     parser.add_argument("--device", default=0, type=int, help='the cuda device to use to generate images')
     parser.add_argument("--global_rank", default=0, type=int, help='global rank of this process')
@@ -261,7 +268,8 @@ def create_argparser():
     
     # these two arguments are only valid when not start from scratch
     parser.add_argument("--denoise_steps", default=25, type=int, help='number of denoise steps')
-    parser.add_argument("--dataset_path", default='/mnt/lustre/feiben/DDPM_Beat_GAN/evaluations/precomputed/biggan_deep_imagenet64.npz', type=str, help='path to the generated images. Could be an npz file or an image folder')
+    #parser.add_argument("--dataset_path", default='/mnt/lustre/feiben/DDPM_Beat_GAN/evaluations/precomputed/biggan_deep_imagenet64.npz', type=str, help='path to the generated images. Could be an npz file or an image folder')
+    parser.add_argument("--dataset_path", default='../evaluations/precomputed/biggan_deep_imagenet64.npz', type=str, help='path to the generated images. Could be an npz file or an image folder')
     
     parser.add_argument("--use_img_for_guidance", action='store_true', help='whether to use a (low resolution) image for guidance. If true, we generate an image that is similar to the low resolution image')
     parser.add_argument("--img_guidance_scale", default=4000, type=float, help='guidance scale')

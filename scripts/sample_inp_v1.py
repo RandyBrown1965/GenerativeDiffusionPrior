@@ -33,7 +33,7 @@ import pdb
 import pytorch_ssim
 import time 
 
-os.environ['CUDA_VISIBLE_DEVICES']='3'
+#os.environ['CUDA_VISIBLE_DEVICES']='3'
 def get_dataset(path, global_rank, world_size):
     if os.path.isfile(path): # base_samples could be store in a .npz file
         dataset = NpzDataset(path, rank=global_rank, world_size=world_size)
@@ -43,7 +43,8 @@ def get_dataset(path, global_rank, world_size):
     return dataset
 
 # degradation model
-deg = 'sr4'
+#deg = 'sr4'
+deg = 'inp'
 image_size = 256
 channels = 3
 device = 'cuda:0'
@@ -59,7 +60,8 @@ if deg[:3] == 'inp':
         mask = torch.from_numpy(loaded).to(device).reshape(-1)
         missing_r = torch.nonzero(mask == 0).long().reshape(-1) * 3
     else:
-        loaded = np.loadtxt("/nvme/feiben/DDPM_Beat_GAN/scripts/imagenet_dataloader/inp_masks/mask.np")
+        #loaded = np.loadtxt("/nvme/feiben/DDPM_Beat_GAN/scripts/imagenet_dataloader/inp_masks/mask.np")
+        loaded = np.loadtxt("../scripts/inp_masks/mask.np")
         mask = torch.from_numpy(loaded).to(device)
         missing_r = mask[:image_size**2 // 4].to(device).long() * 3  
     missing_g = missing_r + 1
@@ -241,6 +243,8 @@ def main():
     # dist.barrier()
     logger.log("sampling complete")
 
+    del model
+    del image
 
 def create_argparser():
     defaults = dict(
@@ -248,15 +252,19 @@ def create_argparser():
         num_samples=100,
         batch_size=100,
         use_ddim=False,
-        model_path="/nvme/feiben/DDPM_Beat_GAN/scripts/models/256x256_diffusion_uncond.pt"
+        #model_path="/nvme/feiben/DDPM_Beat_GAN/scripts/models/256x256_diffusion_uncond.pt"
+        model_path="../scripts/models/256x256_diffusion_uncond.pt"
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
     add_dict_to_argparser(parser, defaults)
 
 
-    save_dir  = os.path.join('/nvme/feiben/GDP/generate_images', ('generated_image_GDP_' + deg +'_v1'))
-    base_samples  = os.path.join('/nvme/feiben/DDPM_Beat_GAN/scripts/imagenet_dataloader', (('inp_resolution_256.npz')))
+    #save_dir  = os.path.join('/nvme/feiben/GDP/generate_images', ('generated_image_GDP_' + deg +'_v1'))
+    save_dir  = os.path.join('../generate_images', ('generated_image_GDP_' + deg +'_v1'))
+    #base_samples  = os.path.join('/nvme/feiben/DDPM_Beat_GAN/scripts/imagenet_dataloader', (('inp_resolution_256.npz')))
+    #base_samples  = os.path.join('../scripts/imagenet_dataloader', (('inp_resolution_256.npz')))
+    base_samples  = os.path.join('../scripts/imagenet_dataloader', 'VIRTUAL_imagenet256_labeled.npz')
     # add zhaoyang own's arguments
     parser.add_argument("--device", default=0, type=int, help='the cuda device to use to generate images')
     parser.add_argument("--global_rank", default=0, type=int, help='global rank of this process')
@@ -267,7 +275,8 @@ def create_argparser():
     
     # these two arguments are only valid when not start from scratch
     parser.add_argument("--denoise_steps", default=25, type=int, help='number of denoise steps')
-    parser.add_argument("--dataset_path", default='/nvme/feiben/DDPM_Beat_GAN/evaluations/precomputed/biggan_deep_imagenet64.npz', type=str, help='path to the generated images. Could be an npz file or an image folder')
+    #parser.add_argument("--dataset_path", default='/nvme/feiben/DDPM_Beat_GAN/evaluations/precomputed/biggan_deep_imagenet64.npz', type=str, help='path to the generated images. Could be an npz file or an image folder')
+    parser.add_argument("--dataset_path", default='../evaluations/precomputed/biggan_deep_imagenet64.npz', type=str, help='path to the generated images. Could be an npz file or an image folder')
     
     parser.add_argument("--use_img_for_guidance", action='store_true', help='whether to use a (low resolution) image for guidance. If true, we generate an image that is similar to the low resolution image')
     parser.add_argument("--img_guidance_scale", default=250000, type=float, help='guidance scale')
