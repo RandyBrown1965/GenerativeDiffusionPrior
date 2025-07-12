@@ -55,6 +55,8 @@ def load_data(
         random_crop=random_crop,
         random_flip=random_flip,
     )
+    deterministic = True
+    print("DETERMINISTIC=",deterministic)
     if deterministic:
         loader = DataLoader(
             dataset, batch_size=batch_size, shuffle=False, num_workers=1, drop_last=True

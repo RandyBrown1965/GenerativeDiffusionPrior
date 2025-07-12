@@ -13,6 +13,7 @@ import torch as th
 
 from .nn import mean_flat
 from .losses import normal_kl, discretized_gaussian_log_likelihood
+from . import dist_util
 
 
 def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
@@ -167,6 +168,7 @@ class GaussianDiffusion:
             * np.sqrt(alphas)
             / (1.0 - self.alphas_cumprod)
         )
+        self.noise_profile = 0
 
     def q_mean_variance(self, x_start, t):
         """
@@ -788,6 +790,9 @@ class GaussianDiffusion:
             model_kwargs = {}
         if noise is None:
             noise = th.randn_like(x_start)
+        # Insert our film_grain noise
+        noise = self.noise_profile.to(dist_util.dev())
+        #print("noise = ",noise.is_cuda, noise.shape, noise)
         x_t = self.q_sample(x_start, t, noise=noise)
 
         terms = {}

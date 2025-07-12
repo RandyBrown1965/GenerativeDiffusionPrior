@@ -6,6 +6,7 @@ import blobfile as bf
 import torch as th
 import torch.distributed as dist
 from torch.nn.parallel.distributed import DistributedDataParallel as DDP
+from torchvision.transforms.functional import to_pil_image
 from torch.optim import AdamW
 
 from . import dist_util, logger
@@ -25,7 +26,8 @@ class TrainLoop:
         *,
         model,
         diffusion,
-        data,
+        noisy_start_data,
+        guidance_data,
         batch_size,
         microbatch,
         lr,
@@ -41,7 +43,8 @@ class TrainLoop:
     ):
         self.model = model
         self.diffusion = diffusion
-        self.data = data
+        self.noisy_start_data = noisy_start_data
+        self.guidance_data = guidance_data
         self.batch_size = batch_size
         self.microbatch = microbatch if microbatch > 0 else batch_size
         self.lr = lr
@@ -155,7 +158,22 @@ class TrainLoop:
             not self.lr_anneal_steps
             or self.step + self.resume_step < self.lr_anneal_steps
         ):
-            batch, cond = next(self.data)
+            batch, cond = next(self.guidance_data)
+            
+            noisy_batch, _ = next(self.noisy_start_data)
+            self.diffusion.noise_profile = noisy_batch - batch
+
+
+            """
+            print("BATCH=", batch)
+            sample = ((batch + 1) * 127.5).clamp(0, 255).to(th.uint8)
+            for i in range(len(sample)):
+                img = to_pil_image(sample[i, :, :, :])
+                img.show()
+            #print("COND=", cond)
+            """
+
+
             self.run_step(batch, cond)
             if self.step % self.log_interval == 0:
                 logger.dumpkvs()
