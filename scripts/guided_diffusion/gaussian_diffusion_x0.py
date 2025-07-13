@@ -26,7 +26,7 @@ def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
     they are committed to maintain backwards compatibility.
     """
     # A HACK in case schedule_name is a list
-    if type(schedule_name) == list:
+    if (type(schedule_name) != str) and (len(schedule_name) > 1):
         print("schedule_name IS A LIST", schedule_name)
         schedule_name = schedule_name[0]
     if schedule_name == "linear":
