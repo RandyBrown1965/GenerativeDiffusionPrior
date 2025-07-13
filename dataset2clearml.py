@@ -1,9 +1,9 @@
 from clearml import Dataset
 
 # Create the new dataset. It should appear in the ClearML dashboard as "Uploading"
-#dataset_dir_name = "imagenet256_clean"
-#dataset_dir_name = "imagenet256_noisy_fuji250under"
-dataset_dir_name = "imagenet256_noisy_mixed"
+#dataset_dir_name = "Imagenet256_clean"
+#dataset_dir_name = "Imagenet256_noisy_fuji250under"
+dataset_dir_name = "Imagenet256_noisy_mixed"
 
 ds = Dataset.create(
     dataset_project='TP601375_DiffusionDenoiser',

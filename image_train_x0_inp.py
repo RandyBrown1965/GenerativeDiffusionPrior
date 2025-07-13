@@ -67,8 +67,8 @@ def main():
     guidance_dataset_meta = guidance_dataset.get_metadata()
     
     guidance_data = load_data(
-        data_dir=args.guidance_images,   # For running locally
-        #data_dir = guidance_dataset_path, # For running on clearml
+        #data_dir=args.guidance_images,   # For running locally
+        data_dir = guidance_dataset_path, # For running on clearml
         batch_size=args.batch_size,
         image_size=args.image_size,
         class_cond=args.class_cond,
@@ -79,8 +79,8 @@ def main():
     noisy_dataset_meta = noisy_dataset.get_metadata()
     
     noisy_start_data = load_data(
-        data_dir=args.noisy_start_images, # For running locally
-        #data_dir = noisy_dataset_path,     # For running on clearml
+        #data_dir=args.noisy_start_images, # For running locally
+        data_dir = noisy_dataset_path,     # For running on clearml
         batch_size=args.batch_size,
         image_size=args.image_size,
         class_cond=args.class_cond,
