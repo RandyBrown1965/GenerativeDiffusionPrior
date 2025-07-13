@@ -74,7 +74,7 @@ def main():
         class_cond=args.class_cond,
     )
  
-    noisy_dataset = Dataset.get(dataset_name = "Imagenet256_noisy_fuji250under_for_TP602603")
+    noisy_dataset = Dataset.get(dataset_name = "imagenet256_noisy_fuji250under_for_TP602603")
     noisy_dataset_path = noisy_dataset.get_local_copy()
     noisy_dataset_meta = noisy_dataset.get_metadata()
     
