@@ -160,7 +160,7 @@ def create_argparser():
     parser.add_argument("--sample_noisy_x_lr", action='store_true', help='whether to first sample a noisy x_lr, then use it for guidance. ')
     parser.add_argument("--sample_noisy_x_lr_t_thred", default=1e8, type=int, help='only for t lower than sample_noisy_x_lr_t_thred, we add noise to lr')  
     parser.add_argument("--start_from_scratch", action='store_true', help='whether to generate images purely from scratch, not use gan or vae generated samples')
-    parser.add_argument("--deg", default='sr4', type=str, help='the chosen of degradation model')
+    parser.add_argument("--deg", default='inp25', type=str, help='the chosen of degradation model')
     # num_samples is defined elsewhere, num_samples is only valid when start_from_scratch and not use img as guidance
     # if use img as guidance, num_samples will be set to num of guidance images
     # parser.add_argument("--num_samples", type=int, default=50000, help='num of samples to generate, only valid when start_from_scratch is true')

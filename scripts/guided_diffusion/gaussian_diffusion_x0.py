@@ -25,6 +25,10 @@ def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
     Beta schedules may be added, but should not be removed or changed once
     they are committed to maintain backwards compatibility.
     """
+    # A HACK in case schedule_name is a list
+    if type(schedule_name) == list:
+        print("schedule_name IS A LIST", schedule_name)
+        schedule_name = schedule_name[0]
     if schedule_name == "linear":
         # Linear schedule from Ho et al, extended to work for any number of
         # diffusion steps.
