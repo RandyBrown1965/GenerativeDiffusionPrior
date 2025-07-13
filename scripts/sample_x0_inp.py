@@ -40,38 +40,6 @@ def get_dataset(path, global_rank, world_size):
                         permute=True, normalize=True, rank=global_rank, world_size=world_size)
     return dataset
 
-# degradation model
-deg = 'inp'
-image_size = 256
-channels = 3
-device = 'cuda:0'
-H_funcs = None
-if deg[:3] == 'inp':
-    from functions.svd_replacement import Inpainting
-    if deg == 'inp_lolcat':
-        loaded = np.load("inp_masks/lolcat_extra.npy")
-        mask = torch.from_numpy(loaded).to(device).reshape(-1)
-        missing_r = torch.nonzero(mask == 0).long().reshape(-1) * 3
-    elif deg == 'inp_lorem':
-        loaded = np.load("inp_masks/lorem3.npy")
-        mask = torch.from_numpy(loaded).to(device).reshape(-1)
-        missing_r = torch.nonzero(mask == 0).long().reshape(-1) * 3
-    else:
-        #loaded = np.loadtxt("/mnt/lustre/feiben/DDPM_Beat_GAN/scripts/imagenet_dataloader/inp_masks/mask.np")
-        loaded = np.loadtxt("../scripts/inp_masks/mask.np")
-        mask = torch.from_numpy(loaded).to(device)
-        missing_r = mask[:image_size**2 // 4].to(device).long() * 3  
-    missing_g = missing_r + 1
-    missing_b = missing_g + 1
-    missing = torch.cat([missing_r, missing_g, missing_b], dim=0)
-    H_funcs = Inpainting(channels, image_size, missing, device)
-elif deg[:2] == 'sr':
-    blur_by = int(deg[2:])
-    from functions.svd_replacement import SuperResolution
-    H_funcs = SuperResolution(channels, image_size, blur_by, device)
-else:
-    print("ERROR: degradation type not supported")
-    quit()
 
 def main():
     args = create_argparser().parse_args()
@@ -81,6 +49,40 @@ def main():
 
     # dist_util.setup_dist()
     logger.configure(dir = save_dir)
+    logger.log("\nARGS=", args)
+
+    # 256x256 degradation model
+    deg = args.deg # defalt="inp25"
+    image_size = args.image_size # default=256
+    channels = 3
+    device = 'cuda:0'
+    H_funcs = None
+    if deg[:3] == 'inp':
+        from functions.svd_replacement import Inpainting
+        if deg == 'inp_lolcat':
+            loaded = np.load("inp_masks/lolcat_extra.npy")
+            mask = torch.from_numpy(loaded).to(device).reshape(-1)
+            missing_r = torch.nonzero(mask == 0).long().reshape(-1) * 3
+        elif deg == 'inp_lorem':
+            loaded = np.load("inp_masks/lorem3.npy")
+            mask = torch.from_numpy(loaded).to(device).reshape(-1)
+            missing_r = torch.nonzero(mask == 0).long().reshape(-1) * 3
+        else:
+            #loaded = np.loadtxt("/mnt/lustre/feiben/DDPM_Beat_GAN/scripts/imagenet_dataloader/inp_masks/mask.np")
+            loaded = np.loadtxt("../scripts/inp_masks/mask.np")
+            mask = torch.from_numpy(loaded).to(device)
+            missing_r = mask[:image_size**2 // 4].to(device).long() * 3  
+        missing_g = missing_r + 1
+        missing_b = missing_g + 1
+        missing = torch.cat([missing_r, missing_g, missing_b], dim=0)
+        H_funcs = Inpainting(channels, image_size, missing, device)
+    elif deg[:2] == 'sr':
+        blur_by = int(deg[2:])
+        from functions.svd_replacement import SuperResolution
+        H_funcs = SuperResolution(channels, image_size, blur_by, device)
+    else:
+        print("ERROR: degradation type not supported")
+        quit()
 
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
@@ -260,9 +262,8 @@ def create_argparser():
     parser = argparse.ArgumentParser()
     add_dict_to_argparser(parser, defaults)
 
-
     #save_dir  = os.path.join('/mnt/petrelfs/feiben/GDP/generate_images', ('generated_image_x0_GDP_' + deg))
-    save_dir  = os.path.join('../generated_images', ('generated_image_x0_GDP_' + deg))
+    save_dir  = os.path.join('../generated_images', ('generated_image_x0_GDP_inp'))
     #base_samples  = os.path.join('/mnt/lustre/feiben/DDPM_Beat_GAN/scripts/imagenet_dataloader', (deg + ('_resolution_256.npz')))
     #base_samples  = os.path.join('../scripts/imagenet_dataloader', (deg + ('_resolution_256.npz')))
     base_samples  = os.path.join('../scripts/imagenet_dataloader', 'VIRTUAL_imagenet256_labeled.npz')
@@ -287,7 +288,7 @@ def create_argparser():
     parser.add_argument("--sample_noisy_x_lr_t_thred", default=1e8, type=int, help='only for t lower than sample_noisy_x_lr_t_thred, we add noise to lr')
     
     parser.add_argument("--start_from_scratch", action='store_true', help='whether to generate images purely from scratch, not use gan or vae generated samples')
-    parser.add_argument("--deg", default='sr4', type=str, help='the chosen of degradation model')
+    parser.add_argument("--deg", default='inp25', type=str, help='the chosen of degradation model')
     # num_samples is defined elsewhere, num_samples is only valid when start_from_scratch and not use img as guidance
     # if use img as guidance, num_samples will be set to num of guidance images
     # parser.add_argument("--num_samples", type=int, default=50000, help='num of samples to generate, only valid when start_from_scratch is true')
