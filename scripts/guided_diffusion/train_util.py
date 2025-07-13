@@ -6,8 +6,9 @@ import blobfile as bf
 import torch as th
 import torch.distributed as dist
 from torch.nn.parallel.distributed import DistributedDataParallel as DDP
-from torchvision.transforms.functional import to_pil_image
 from torch.optim import AdamW
+
+from torchvision.transforms.functional import to_pil_image
 
 from . import dist_util, logger
 from .fp16_util import MixedPrecisionTrainer
@@ -161,7 +162,8 @@ class TrainLoop:
             batch, cond = next(self.guidance_data)
             
             noisy_batch, _ = next(self.noisy_start_data)
-            self.diffusion.noise_profile = noisy_batch - batch
+            #self.diffusion.noise_profile = noisy_batch - batch
+            self.diffusion.noise_profile = batch - noisy_batch
 
 
             """
@@ -176,6 +178,7 @@ class TrainLoop:
 
             self.run_step(batch, cond)
             if self.step % self.log_interval == 0:
+                logger.log("Step=", self.step)
                 logger.dumpkvs()
             if self.step % self.save_interval == 0:
                 self.save()
